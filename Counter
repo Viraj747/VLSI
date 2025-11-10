@@ -1,0 +1,127 @@
+MOD 25 Counter
+Code:
+library IEEE;
+ use IEEE.STD_LOGIC_1164.ALL;
+ use IEEE.STD_LOGIC_UNSIGNED.ALL;
+ entity mod25 is
+    Port ( 
+        rst : in STD_LOGIC;
+        pr  : in STD_LOGIC;
+        clk : in STD_LOGIC;
+        clk_div : inout STD_LOGIC; 
+        dir : in STD_LOGIC;
+        Q   : out STD_LOGIC_VECTOR(4 downto 0)
+    );
+ end mod25;
+ architecture mod25_arch of mod25 is
+    signal Qtemp : STD_LOGIC_VECTOR(4 downto 0) := "00000";
+    signal Counter : STD_LOGIC_VECTOR (27 downto 0) := (others => '0');
+ begin
+    process(rst, pr, clk, dir)
+    begin
+        if rst = '1' then
+            Qtemp <= (others => '0');
+        
+        elsif pr = '1' then
+            Qtemp <= (others => '1');
+        
+        elsif falling_edge(clk) then
+            if dir = '1' then  --UP counting
+                if Qtemp < 24 then
+                    Qtemp <= Qtemp + 1;
+                else
+                    Qtemp <= "00000";
+                end if;
+            else              --DOWN counting
+                if Qtemp > 7 then
+                    Qtemp <= Qtemp -1;
+                else
+                    Qtemp <= "11111";
+                end if;
+            end if;
+        end if;
+    end process;
+     Q <= Qtemp;
+     
+    process(clk)
+        begin 
+                if clk'event and clk = '1' then
+                    counter <= counter + 1;
+                end if;
+    end process;
+    clk_div <= counter(0);
+ end mod25_arch;
+
+
+Test Bench:
+library IEEE;
+ use IEEE.STD_LOGIC_1164.ALL;
+ entity mod25_tb is
+ end mod25_tb;
+ architecture Behavioral of mod25_tb is
+    --Component Declaration for the Unit Under Test (UUT)
+    component mod25
+        Port ( 
+            rst : in STD_LOGIC;
+            pr  : in STD_LOGIC;
+            clk : in STD_LOGIC;
+            clk_div : inout STD_LOGIC;
+            dir : in STD_LOGIC;
+            Q   : out STD_LOGIC_VECTOR(4 downto 0)
+        );
+    end component;
+    --Signals to connect to the UUT
+    signal rst : STD_LOGIC := '0';
+    signal pr  : STD_LOGIC := '0';
+    signal clk : STD_LOGIC := '0';
+    signal clk_div : STD_LOGIC := '0';
+    signal dir : STD_LOGIC := '1'; --default: up count
+    signal Q   : STD_LOGIC_VECTOR(4 downto 0);
+ begin
+    --Instantiate the Unit Under Test (UUT)
+    uut: mod25
+        port map (
+            rst => rst,
+            pr  => pr,
+            clk => clk,
+            clk_div => clk_div,
+            dir => dir,
+            Q   => Q
+        );
+    --Clock generation: 10 ns period (falling edge sensitive)
+    clk_process : process
+    begin
+        while true loop
+            clk <= '1';
+            wait for 5 ns;
+            clk <= '0';
+            wait for 5 ns;
+        end loop;
+    end process;
+    --Stimulus process
+    stim_proc: process
+    begin
+        --Initial reset
+        rst <= '1';
+        wait for 20 ns;
+        rst <= '0';
+        wait for 20 ns;
+        --Up count for a few cycles
+        dir <= '1';  --count up
+        wait for 300 ns;
+        --Now preset
+        pr <= '1';
+        wait for 20 ns;
+        pr <= '0';
+        wait for 20 ns;
+        --Down count
+        dir <= '0';
+        wait for 300 ns;
+        --Apply reset again
+        rst <= '1';
+        wait for 20 ns;
+        rst <= '0';
+        --End simulation
+        wait;
+    end process;
+ end Behavioral;

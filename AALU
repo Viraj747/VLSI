@@ -1,0 +1,129 @@
+ALU
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use IEEE.std_logic_unsigned.all;
+
+entity ALU is
+ Port ( a : in STD_LOGIC_VECTOR (3 downto 0);
+ b : in STD_LOGIC_VECTOR (3 downto 0);
+ s : in STD_LOGIC_VECTOR (2 downto 0);
+ y : out STD_LOGIC_VECTOR (3 downto 0));
+end ALU;
+architecture Behavioral of ALU is
+begin
+with s select
+y <= a + b when "000",
+a - b when "001",
+a + 1 when "010",
+b + 1 when "011",
+
+a and b when "100",
+a or b when "101",
+a nand b when "110",
+a nor b when "111",
+a xor b when others;
+end Behavioral;
+
+ALU test bench file:
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+-- Required for arithmetic operations (+, -, >) on STD_LOGIC_VECTOR
+use IEEE.NUMERIC_STD.ALL; 
+
+entity ALU_TB is
+end ALU_TB;
+
+architecture Behavioral of ALU_TB is
+
+    -- Component declaration for the Unit Under Test (UUT)
+    component ALU is
+        Port ( a : in STD_LOGIC_VECTOR (3 downto 0);
+               b : in STD_LOGIC_VECTOR (3 downto 0);
+               s : in STD_LOGIC_VECTOR (2 downto 0);
+               y : out STD_LOGIC_VECTOR (3 downto 0));
+    end component;
+
+    -- Signals for component ports
+    signal a_sig : STD_LOGIC_VECTOR (3 downto 0) := "0000";
+    signal b_sig : STD_LOGIC_VECTOR (3 downto 0) := "0000";
+    signal s_sig : STD_LOGIC_VECTOR (2 downto 0) := "000";
+    signal y_sig : STD_LOGIC_VECTOR (3 downto 0);
+
+    -- Clock and period definition (optional, but good practice)
+    constant CLK_PERIOD : time := 10 ns;
+
+begin
+
+    -- Instantiate the Unit Under Test (UUT)
+    uut: ALU port map (
+        a => a_sig,
+        b => b_sig,
+        s => s_sig,
+        y => y_sig
+    );
+
+    -- Stimulus process
+    stim_proc: process
+    begin        
+        -- *** Test Case 1: Addition (A + B) ***
+        s_sig <= "000"; -- "000"
+        a_sig <= "0011"; -- 3
+        b_sig <= "0101"; -- 5
+        wait for CLK_PERIOD; -- Expected Y = "1000" (8)
+
+        -- *** Test Case 2: Subtraction (A - B) ***
+        s_sig <= "001"; -- "001"
+        a_sig <= "1000"; -- 8
+        b_sig <= "0010"; -- 2
+        wait for CLK_PERIOD; -- Expected Y = "0110" (6)
+
+        -- *** Test Case 3: Increment A (A + 1) ***
+        s_sig <= "010"; -- "010"
+        a_sig <= "1110"; -- 14
+        b_sig <= "0000"; 
+        wait for CLK_PERIOD; -- Expected Y = "1111" (15)
+
+        -- *** Test Case 4: Increment B (B + 1) ***
+        s_sig <= "011"; -- "011"
+        a_sig <= "0000"; 
+        b_sig <= "0001"; -- 1
+        wait for CLK_PERIOD; -- Expected Y = "0010" (2)
+
+        -- *** Test Case 5: Bitwise AND (A AND B) ***
+        s_sig <= "100"; -- "100"
+        a_sig <= "1100"; 
+        b_sig <= "1010"; 
+        wait for CLK_PERIOD; -- Expected Y = "1000"
+
+        -- *** Test Case 6: Bitwise OR (A OR B) ***
+        s_sig <= "101"; -- "101"
+        a_sig <= "0011"; 
+        b_sig <= "0101"; 
+        wait for CLK_PERIOD; -- Expected Y = "0111"
+
+        -- *** Test Case 7: Bitwise NAND (A NAND B) ***
+        s_sig <= "110"; -- "110"
+        a_sig <= "1111"; 
+        b_sig <= "0000"; 
+        wait for CLK_PERIOD; -- Expected Y = "1111" (Inverse of "0000")
+
+        -- *** Test Case 8: Bitwise NOR (A NOR B) ***
+        s_sig <= "111"; -- "111"
+        a_sig <= "1010"; 
+        b_sig <= "0101"; 
+        wait for CLK_PERIOD; -- Expected Y = "0000" (Inverse of "1111")
+        
+        -- *** Test Case 9: Default/Others (A XOR B) ***
+        s_sig <= "100"; -- Trigger "others" case
+        a_sig <= "1000"; 
+        b_sig <= "0001"; 
+        wait for CLK_PERIOD; -- Expected Y = "1001"
+
+        -- End simulation
+        wait; 
+    end process;
+
+end Behavioral;
